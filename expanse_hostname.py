@@ -53,7 +53,7 @@ class HostnameWF:
         try:
             self.wf.plan(sites=["expanse"],
                          output_sites=["local"],
-                         verbose=3,
+                         verbose=1,
                         submit=True)
         except PegasusClientError as e:
             print(e)
