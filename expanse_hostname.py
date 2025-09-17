@@ -52,7 +52,7 @@ class HostnameWF:
     def plan_submit(self):
         try:
             self.wf.plan(sites=["expanse"],
-                         output_sites=["local"],
+                         output_sites=["expanse"],
                          verbose=1,
                         submit=True)
         except PegasusClientError as e:
@@ -92,7 +92,9 @@ class HostnameWF:
 
         # nicer looking submit dirs
         #self.props["pegasus.dir.useTimestamp"] = "true"
-
+        self.props["pegasus.data.configuration"] = "condorio"
+        self.props["pegasus.transfer.worker.package"] = "true"
+        self.props["pegasus.mode"] = "development"
         
     # --- Site Catalog -------------------------------------------------------------
     def create_sites_catalog(self, exec_site_name="condorpool"):
@@ -112,6 +114,14 @@ class HostnameWF:
                         .add_pegasus_profile(
                             style="condor"
                         )
+                    )
+        exec_site_shared_scratch_dir="/home/ux454545/pegasuswfs/scratch"
+        exec_site_shared_storage_dir="/home/ux454545/pegasuswfs/output"
+        expanse.add_directories(
+			Directory(Directory.SHARED_SCRATCH, exec_site_shared_scratch_dir)
+                            .add_file_servers(FileServer("file://" + exec_site_shared_scratch_dir, Operation.ALL)),
+                        Directory(Directory.LOCAL_STORAGE, exec_site_shared_storage_dir)
+                            .add_file_servers(FileServer("file://" + exec_site_shared_storage_dir, Operation.ALL))
                     )
         expanse.add_profiles(Namespace.ENV, LANG='C')
         expanse.add_profiles(Namespace.ENV, PYTHONUNBUFFERED='1')
