@@ -2,6 +2,8 @@
 
 import logging
 import os
+import argparse
+import sys
 
 from pathlib import Path
 
@@ -15,7 +17,7 @@ class HostnameWF:
     BASE_DIR = Path(".").resolve()
     
     
-    def __init__(self):
+    def __init__(self, cluster_home_dir=None):
         
         self.props = Properties()
 
@@ -31,7 +33,7 @@ class HostnameWF:
         self.wf_dir = str(Path(".").resolve())
         self.shared_scratch_dir = os.path.join(self.wf_dir, "scratch")
         self.local_storage_dir = os.path.join(self.wf_dir, "output")
-    
+        self.cluster_home_dir = cluster_home_dir
     
     # --- Write files in directory -------------------------------------------------
     def write(self):
@@ -115,8 +117,8 @@ class HostnameWF:
                             style="condor"
                         )
                     )
-        exec_site_shared_scratch_dir="/home/ux454545/pegasuswfs/scratch"
-        exec_site_shared_storage_dir="/home/ux454545/pegasuswfs/output"
+        exec_site_shared_scratch_dir= os.path.join(self.cluster_home_dir, "pegausswfs/scratch")
+        exec_site_shared_storage_dir=os.path.join(self.cluster_home_dir, "pegausswfs/outputs")
         expanse.add_directories(
 			Directory(Directory.SHARED_SCRATCH, exec_site_shared_scratch_dir)
                             .add_file_servers(FileServer("file://" + exec_site_shared_scratch_dir, Operation.ALL)),
@@ -178,25 +180,40 @@ class HostnameWF:
         job.set_stdout("hostname.out")
         self.wf.add_jobs(job)
 
-            
-workflow = HostnameWF()
 
-print("Creating execution sites...")
-workflow.create_sites_catalog("expanse")
+def generate_wf():
+    '''
+    Main function that parses arguments and generates the pegasus
+    workflow
+    '''
 
-print("Creating workflow properties...")
-workflow.create_pegasus_properties()
+    parser = argparse.ArgumentParser(description="generate a Pegasus CHESS QMB workflow")
+    parser.add_argument('--cluster-home-dir', dest='cluster_home_dir', required=True,
+                        help='your home directory on expanse system. For real workflows you should specify directory on the Expanse shared filesystem')
 
-print("Creating transformation catalog...")
-workflow.create_transformation_catalog("expanse")
+    args = parser.parse_args(sys.argv[1:])
 
-print("Creating replica catalog...")
-workflow.create_replica_catalog()
+    workflow = HostnameWF(args.cluster_home_dir)
 
-print("Creating workflow dag...")
-workflow.create_workflow()
+    print("Creating execution sites...")
+    workflow.create_sites_catalog("expanse")
 
-workflow.write()
-print("Workflow has been generated!")
+    print("Creating workflow properties...")
+    workflow.create_pegasus_properties()
 
-workflow.plan_submit()
+    print("Creating transformation catalog...")
+    workflow.create_transformation_catalog("expanse")
+
+    print("Creating replica catalog...")
+    workflow.create_replica_catalog()
+
+    print("Creating workflow dag...")
+    workflow.create_workflow()
+
+    workflow.write()
+    print("Workflow has been generated!")
+
+    workflow.plan_submit()
+
+if __name__ == '__main__':
+    generate_wf()
