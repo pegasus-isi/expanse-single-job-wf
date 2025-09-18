@@ -33,7 +33,7 @@ class HostnameWF:
         self.wf_dir = str(Path(".").resolve())
         self.data_configuration = data_configuration
         self.shared_scratch_dir = os.path.join(self.wf_dir, "scratch")
-        self.local_storage_dir = os.path.join(self.wf_dir, "output")
+        self.local_storage_dir = os.path.join(self.wf_dir, "pegasuswfs/outputs")
         self.cluster_home_dir = cluster_home_dir
 
         if cluster_shared_dir is None:
