@@ -34,6 +34,8 @@ class HostnameWF:
         self.cluster_home_dir = cluster_home_dir
         if cluster_shared_dir is None:
             self.cluster_shared_dir = self.cluster_home_dir
+        else:
+            self.cluster_shared_dir = cluster_shared_dir
 
     # --- Write files in directory -------------------------------------------------
     def write(self):
@@ -215,8 +217,8 @@ def generate_wf():
         "Workflow has been submitted and will run in the directory {} \n"
         "The outputs of the workflow will appear in the following directory on expanse {} ".
         format(
-            args.cluster_home_dir + "/pegausswfs/scratch",
-            args.cluster_home_dir + "/pegausswfs/outputs"))
+            workflow.cluster_shared_dir + "/pegausswfs/scratch",
+            workflow.cluster_home_dir + "/pegausswfs/outputs"))
 
 
 if __name__ == '__main__':
