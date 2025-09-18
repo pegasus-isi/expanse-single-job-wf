@@ -13,10 +13,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 class HostnameWF:
-    
     BASE_DIR = Path(".").resolve()
 
-    def __init__(self, cluster_home_dir=None):
+    def __init__(self, cluster_home_dir=None, cluster_shared_dir=None):
 
         self.props = Properties()
 
@@ -33,6 +32,8 @@ class HostnameWF:
         self.shared_scratch_dir = os.path.join(self.wf_dir, "scratch")
         self.local_storage_dir = os.path.join(self.wf_dir, "output")
         self.cluster_home_dir = cluster_home_dir
+        if cluster_shared_dir is None:
+            self.cluster_shared_dir = self.cluster_home_dir
 
     # --- Write files in directory -------------------------------------------------
     def write(self):
@@ -112,7 +113,7 @@ class HostnameWF:
             style="condor"
         )
         )
-        exec_site_shared_scratch_dir = os.path.join(self.cluster_home_dir, "pegausswfs/scratch")
+        exec_site_shared_scratch_dir = os.path.join(self.cluster_shared_dir, "pegausswfs/scratch")
         exec_site_shared_storage_dir = os.path.join(self.cluster_home_dir, "pegausswfs/outputs")
         expanse.add_directories(
             Directory(Directory.SHARED_SCRATCH, exec_site_shared_scratch_dir)
@@ -181,11 +182,15 @@ def generate_wf():
 
     parser = argparse.ArgumentParser(description="generate a Pegasus CHESS QMB workflow")
     parser.add_argument('--cluster-home-dir', dest='cluster_home_dir', required=True,
-                        help='your home directory on expanse system. For real workflows you should specify directory on the Expanse shared filesystem')
+                        help='your home directory on expanse system. For real workflows you should specify directory '
+                             'on the Expanse shared filesystem')
+    parser.add_argument('--cluster-shared-dir', dest='cluster_shared_dir', required=False,
+                        help='directory on the shared filesystem of the cluster where all the jobs of your workflow will '
+                             'run. If not specified, defaults to --cluster-home-dir.')
 
     args = parser.parse_args(sys.argv[1:])
 
-    workflow = HostnameWF(args.cluster_home_dir)
+    workflow = HostnameWF(args.cluster_home_dir, args.cluster_shared_dir)
 
     print("Creating execution sites...")
     workflow.create_sites_catalog("expanse")
@@ -207,7 +212,10 @@ def generate_wf():
 
     workflow.plan_submit()
     print(
-        "Workflow has been submitted. The outputs of the workflow will appear in the following directory on expanse {}".format(
+        "Workflow has been submitted and will run in the directory {} \n"
+        "The outputs of the workflow will appear in the following directory on expanse {} ".
+        format(
+            args.cluster_home_dir + "/pegausswfs/scratch",
             args.cluster_home_dir + "/pegausswfs/outputs"))
 
 
