@@ -122,8 +122,8 @@ class HostnameWF:
             style="condor"
         )
         )
-        exec_site_shared_scratch_dir = os.path.join(self.cluster_shared_dir, "pegausswfs/scratch")
-        exec_site_shared_storage_dir = os.path.join(self.cluster_home_dir, "pegausswfs/outputs")
+        exec_site_shared_scratch_dir = os.path.join(self.cluster_shared_dir, "pegasuswfs/scratch")
+        exec_site_shared_storage_dir = os.path.join(self.cluster_home_dir, "pegasuswfs/outputs")
         expanse.add_directories(
             Directory(Directory.SHARED_SCRATCH, exec_site_shared_scratch_dir)
             .add_file_servers(FileServer("file://" + exec_site_shared_scratch_dir, Operation.ALL)),
