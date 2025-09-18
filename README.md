@@ -26,4 +26,26 @@ The above example should also work against any of the other supported annex endp
 
 ### Run the workflow
 
-To run the workflow execute the `expanse_hostname.py` script. 
+To run the workflow execute the `expanse_hostname.py` script.  The script takes in 3 command line options
+* data-configuration : the data configuration for your workflow. Can be sharedfs or condorio . Defaults to sharedfs.
+* cluster-home-dir :   the home directory on the cluster which the workflow runs on. 
+* cluster-shared-dir : the shared directory on LUSTRE or other high performance filesystem on the shared fs.
+
+#### Shared FS mode
+
+In this mode, the workflow jobs run on the shared filesystem of the cluster, and is most closely aligned to
+the traditional HPC usecases. 
+
+The outputs for the job will appear in your home directory on the remote cluster, in 
+a directory named **pegasuswfs/outputs**.
+
+#### CondorIO mode
+
+In this mode, the workflow does not use the shared filesystem of the remote cluster to run the jobs. 
+All data transfers are coordinated from the ACCESS Pegasus submit host using in built HTCondor file transfer
+capablities. 
+
+The outputs for the job will appear in your home directory on the ACCESS Pegasus host, in 
+a directory named **pegasuswfs/outputs** from where you launched the workflow.
+
+
