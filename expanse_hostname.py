@@ -11,11 +11,13 @@ from Pegasus.api import *
 
 logging.basicConfig(level=logging.INFO)
 
+EXECUTION_SITE = "expanse"
+
 
 class HostnameWF:
     BASE_DIR = Path(".").resolve()
 
-    def __init__(self, cluster_home_dir=None, cluster_shared_dir=None):
+    def __init__(self, data_configuration="sharedfs", cluster_home_dir=None, cluster_shared_dir=None):
 
         self.props = Properties()
 
@@ -29,13 +31,18 @@ class HostnameWF:
         self.wf.add_replica_catalog(self.rc)
 
         self.wf_dir = str(Path(".").resolve())
+        self.data_configuration = data_configuration
         self.shared_scratch_dir = os.path.join(self.wf_dir, "scratch")
         self.local_storage_dir = os.path.join(self.wf_dir, "output")
         self.cluster_home_dir = cluster_home_dir
+
         if cluster_shared_dir is None:
             self.cluster_shared_dir = self.cluster_home_dir
         else:
             self.cluster_shared_dir = cluster_shared_dir
+
+        # in condorio mode the output is brought back to submit host
+        self.output_site = EXECUTION_SITE if self.data_configuration == "sharedfs" else "local"
 
     # --- Write files in directory -------------------------------------------------
     def write(self):
@@ -54,8 +61,8 @@ class HostnameWF:
     # --- Plan and Submit the workflow ----------------------------------------------
     def plan_submit(self):
         try:
-            self.wf.plan(sites=["expanse"],
-                         output_sites=["expanse"],
+            self.wf.plan(sites=[EXECUTION_SITE],
+                         output_sites=[self.output_site],
                          verbose=1,
                          submit=True)
         except PegasusClientError as e:
@@ -92,7 +99,7 @@ class HostnameWF:
 
         # nicer looking submit dirs
         # self.props["pegasus.dir.useTimestamp"] = "true"
-        self.props["pegasus.data.configuration"] = "sharedfs"
+        self.props["pegasus.data.configuration"] = self.data_configuration
         self.props["pegasus.transfer.worker.package"] = "true"
         self.props["pegasus.mode"] = "development"
 
@@ -138,7 +145,7 @@ class HostnameWF:
         self.sc.add_sites(local, expanse)
 
     # --- Transformation Catalog (Executables and Containers) ----------------------
-    def create_transformation_catalog(self, exec_site_name="expanse"):
+    def create_transformation_catalog(self, exec_site_name=EXECUTION_SITE):
         self.tc = TransformationCatalog()
 
         # main job wrapper
@@ -182,7 +189,9 @@ def generate_wf():
     workflow
     '''
 
-    parser = argparse.ArgumentParser(description="generate a Pegasus CHESS QMB workflow")
+    parser = argparse.ArgumentParser(description="generate a simple sample Pegasus workflow")
+    parser.add_argument('--data-configuration', dest='data_configuration', default="sharedfs", required=False,
+                        help='the data configuration for your workflow. Can be sharedfs or condorio . Defaults to sharedfs.')
     parser.add_argument('--cluster-home-dir', dest='cluster_home_dir', required=True,
                         help='your home directory on expanse system. For real workflows you should specify directory '
                              'on the Expanse shared filesystem')
@@ -192,16 +201,20 @@ def generate_wf():
 
     args = parser.parse_args(sys.argv[1:])
 
-    workflow = HostnameWF(args.cluster_home_dir, args.cluster_shared_dir)
+    if args.data_configuration != "sharedfs" and args.data_configuration != "condorio":
+        print("Invalid data configuration passed for pegasus - {}".format(args.data_configuration))
+        sys.exit(1)
+
+    workflow = HostnameWF(args.data_configuration, args.cluster_home_dir, args.cluster_shared_dir)
 
     print("Creating execution sites...")
-    workflow.create_sites_catalog("expanse")
+    workflow.create_sites_catalog(EXECUTION_SITE)
 
     print("Creating workflow properties...")
     workflow.create_pegasus_properties()
 
     print("Creating transformation catalog...")
-    workflow.create_transformation_catalog("expanse")
+    workflow.create_transformation_catalog(EXECUTION_SITE)
 
     print("Creating replica catalog...")
     workflow.create_replica_catalog()
@@ -214,11 +227,11 @@ def generate_wf():
 
     workflow.plan_submit()
     print(
-        "Workflow has been submitted and will run in the directory {} \n"
-        "The outputs of the workflow will appear in the following directory on expanse {} ".
+        "Workflow has been configured in {} configuration. "
+        "The outputs of the workflow will appear on site {} .".
         format(
-            workflow.cluster_shared_dir + "/pegausswfs/scratch",
-            workflow.cluster_home_dir + "/pegausswfs/outputs"))
+            workflow.data_configuration,
+            workflow.output_site))
 
 
 if __name__ == '__main__':
