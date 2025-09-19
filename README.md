@@ -13,7 +13,10 @@ This workflow is a simplified example of the
 
 To launch the pilot jobs from ACCESS Pegasus submit host, use the *htcondor annex create* command. 
 
-A sample invocation is listed below
+If you have never launched a HTCondor pilot before from ACCESS Pegasus follow the instructions 
+[here](https://access-ci.atlassian.net/wiki/spaces/ACCESSdocumentation/pages/564887666/HTCondor+Annex) .
+
+A sample invocation against **SDSC Expanse** is listed below
 
 ```
 htcondor annex create --project <project-id> --lifetime 3600   --nodes 1  $USER compute@expanse
@@ -23,6 +26,8 @@ Please note the annex created should be named $USER as the ACCESS Pegasus HTCond
 the annex name (same as use ACCESS Pegasus username) to the jobs as a job transform.
 
 The above example should also work against any of the other supported annex endpoints. 
+Please refer to [ACCESS Pegasus Annex documentation ](https://access-ci.atlassian.net/wiki/spaces/ACCESSdocumentation/pages/564887666/HTCondor+Annex)about doing annex against other ACCESS resources.
+
 
 ### Run the workflow
 
